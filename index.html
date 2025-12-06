@@ -4860,7 +4860,7 @@ function formatCurrency(value) {
         value = 0;
     }
     value = Math.max(0, value);
-    return 'R$ ' + value.toFixed(2).replace('.', ',');
+    return value.toFixed(2).replace('.', ',');
 }
 
 function getCategoryName(categoryCode) {
