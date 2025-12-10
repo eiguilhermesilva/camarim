@@ -909,6 +909,7 @@ button[data-view="new-product"] {
     .products-actions .right-actions {
         justify-content: space-between;
     }
+
 }
     </style>
 </head>
@@ -916,7 +917,7 @@ button[data-view="new-product"] {
     <div class="container">
         <aside class="sidebar">
             <div class="logo">
-                <h1>CAMAR<span>IM</span></h1>
+                <h1>CAMARIM<span>.</span></h1>
                 <p>Makeup & Skincare</p>
             </div>
             
@@ -1066,6 +1067,7 @@ button[data-view="new-product"] {
                                     <option value="Belts">Cintos</option>
                                     <option value="Bags">Bolsas</option>
                                     <option value="Activewear">Roupas Esportivas</option>
+                                    <option value="Clothing">Roupas Casuais</option>
                                     <option value="Makeup">Maquiagem</option>
                                     <option value="Skincare">Skincare</option>
                                 </select>
@@ -1073,9 +1075,6 @@ button[data-view="new-product"] {
                         </div>
                         
                         <div class="right-actions">
-                            <button class="btn btn-light" id="filter-products">
-                                <i class="fas fa-filter"></i> Mais Filtros
-                            </button>
                             <button class="btn btn-success" id="export-products">
                                 <i class="fas fa-file-export"></i> Exportar
                             </button>
@@ -1143,6 +1142,7 @@ button[data-view="new-product"] {
                                         <option value="Belts">Cintos</option>
                                         <option value="Bags">Bolsas</option>
                                         <option value="Activewear">Roupas Esportivas</option>
+                                        <option value="Clothing">Roupas Casuais</option>
                                         <option value="Makeup">Maquiagem</option>
                                         <option value="Skincare">Skincare</option>
                                     </select>
@@ -1554,6 +1554,17 @@ button[data-view="new-product"] {
                             <div class="text-right mt-20">
                                 <button type="submit" class="btn btn-success">Salvar Configurações</button>
                             </div>
+
+
+                            <footer style="background-color: #fff; padding: 15px; margin-top: 30px; border-top: 1px solid #dee2e6;">
+                              <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+                              <p style="margin: 0; color: #6c757d; font-size: 0.9rem;">
+                              <strong style="color: #FF6B8B;">Camarim</strong>
+                              <span style="font-size: 1.1rem;">&copy;</span> 2025 - Sistema de Gestão desenvolvido por 
+                              <span style="color: #FF6B8B; font-weight: 500;">Guilherme Silva Vanderley</span></p>
+                            </div>
+                            </footer>
+
                         </form>
                     </div>
                 </div>
@@ -1608,7 +1619,7 @@ button[data-view="new-product"] {
                                 <div class="card-change" id="db-usage"></div>
                             </div>
                         </div>
-                        
+
                         <div class="mt-20">
                             <h3>Ações de Migração</h3>
                             <div class="form-row">
@@ -1657,6 +1668,16 @@ button[data-view="new-product"] {
                                 <span id="db-alert-message"></span>
                             </div>
                         </div>
+                        
+                        <footer style="background-color: #fff; padding: 15px; margin-top: 30px; border-top: 1px solid #dee2e6;">
+                         <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+                              <p style="margin: 0; color: #6c757d; font-size: 0.9rem;">
+                              <strong style="color: #FF6B8B;">Camarim</strong>
+                              <span style="font-size: 1.1rem;">&copy;</span> 2025 - Sistema de Gestão desenvolvido por 
+                              <span style="color: #FF6B8B; font-weight: 500;">Guilherme Silva Vanderley</span></p>
+                            </div>
+                        </footer>
+
                     </div>
                 </div>
             </div>
@@ -4450,6 +4471,7 @@ function updateCategoryChart() {
         'Belts': 'Cintos',
         'Bags': 'Bolsas',
         'Activewear': 'Roupas Esportivas',
+        'Clothing': 'Roupas Casuais',
         'Makeup': 'Maquiagem',
         'Skincare': 'Skincare'
     };
@@ -5069,6 +5091,7 @@ function getCategoryName(categoryCode) {
         'Belts': 'Cintos',
         'Bags': 'Bolsas',
         'Activewear': 'Roupas Esportivas',
+        'Clothing': 'Roupas Casuais',
         'Makeup': 'Maquiagem',
         'Skincare': 'Skincare'
     };
