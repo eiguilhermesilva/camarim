@@ -2779,7 +2779,7 @@ h1 i {
         </div>
         
         <div class="widget-footer">
-            Guilherme Silva Vanderley © 2025 - Atualizado em: 28/12/25
+            Guilherme Silva Vanderley © 2025 - Atualizado em: 28/12/25 às 19h15
         </div>
     </div>
 
@@ -6195,16 +6195,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ============================================
-// CÓDIGO DO DRIVE-BACKUP.JS INTEGRADO
-// ============================================
-
 // drive-backup.js
 // Sistema de backup ULTRA SIMPLIFICADO para Google Drive
 // Adaptado para GG - Controle Financeiro
 
 // PASSO 1: Obtenha estas credenciais em https://console.cloud.google.com/
-var GOOGLE_CLIENT_ID = '951619466938-fnhdvhrvpp3jmj8om1pracs1pqarui1k.apps.googleusercontent.com';
+var GOOGLE_CLIENT_ID = '950131462140-3khqietah1o182jgk70sem6e9vmm4497.apps.googleusercontent.com';
 
 // Estado do sistema
 var backupState = {
@@ -6737,7 +6733,6 @@ function addSimpleBackupUI() {
 function addHeaderButton() {
     var headerActions = document.querySelector('.header-right');
     if (!headerActions) {
-        // Criar container se não existir
         headerActions = document.querySelector('.header')?.querySelector('.header-right');
         if (!headerActions) return;
     }
@@ -6747,22 +6742,64 @@ function addHeaderButton() {
     
     var button = document.createElement('div');
     button.id = 'simple-backup-btn';
-    button.className = 'calculator-toggle';
-    button.style.marginLeft = '10px';
-    button.style.cursor = 'pointer';
+    button.className = 'header-icon-btn';
     button.title = 'Google Drive Backup';
+    button.style.cssText = `
+        cursor: pointer;
+        margin-left: 10px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
     
     button.innerHTML = `
-        <div class="calculator-icon">
+        <div class="icon-container" style="
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #f8f9fa;
+            color: #5f6368;
+            transition: all 0.3s ease;
+            border: 1px solid #dadce0;
+            font-size: 1.1rem;
+        ">
             <i class="fab fa-google-drive"></i>
         </div>
+        <div class="status-dot" style="
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #95a5a6;
+            border: 2px solid #f8f9fa;
+            transition: background-color 0.3s;
+        "></div>
     `;
     
     button.addEventListener('click', showSimpleModal);
     
+    // Adicionar hover effect
+    button.addEventListener('mouseenter', function() {
+        this.querySelector('.icon-container').style.transform = 'scale(1.05)';
+        this.querySelector('.icon-container').style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        this.querySelector('.icon-container').style.background = '#f1f3f4';
+    });
+    
+    button.addEventListener('mouseleave', function() {
+        this.querySelector('.icon-container').style.transform = 'scale(1)';
+        this.querySelector('.icon-container').style.boxShadow = 'none';
+        this.querySelector('.icon-container').style.background = '#f8f9fa';
+    });
+    
     headerActions.appendChild(button);
     
-    // Atualizar aparência do botão baseado no estado
+    // Atualizar estado inicial
     updateHeaderButton();
 }
 
@@ -6773,16 +6810,14 @@ function updateHeaderButton() {
     var headerBtn = document.getElementById('simple-backup-btn');
     if (!headerBtn) return;
     
-    var icon = headerBtn.querySelector('.calculator-icon');
-    if (!icon) return;
+    var statusDot = headerBtn.querySelector('.status-dot');
+    if (!statusDot) return;
     
     if (backupState.signedIn) {
-        icon.style.color = '#27ae60'; // Verde quando conectado
-        icon.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
+        statusDot.style.background = '#34a853'; // Verde do Google
         headerBtn.title = 'Conectado ao Google Drive - Clique para gerenciar backups';
     } else {
-        icon.style.color = '#95a5a6'; // Cinza quando desconectado
-        icon.style.backgroundColor = 'rgba(149, 165, 166, 0.1)';
+        statusDot.style.background = '#dadce0'; // Cinza claro
         headerBtn.title = 'Conectar ao Google Drive';
     }
 }
@@ -6799,97 +6834,573 @@ function createSimpleModal() {
     modal.style.display = 'none';
     
     modal.innerHTML = `
-        <div class="recurring-modal" style="max-width: 700px;">
-            <div class="recurring-modal-header">
-                <h2><i class="fab fa-google-drive"></i> Google Drive Backup</h2>
-                <button class="close-recurring-modal">&times;</button>
+        <div class="backup-modal">
+            <div class="backup-modal-header">
+                <h2><i class="fab fa-google-drive" style="color: #5f6368;"></i> Google Drive Backup</h2>
+                <button class="close-backup-modal" style="
+                    background: none;
+                    border: none;
+                    font-size: 1.8rem;
+                    color: #5f6368;
+                    cursor: pointer;
+                    padding: 0;
+                    width: 30px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                    transition: all 0.2s;
+                    line-height: 1;
+                ">
+                    &times;
+                </button>
             </div>
-            <div class="recurring-modal-content">
-                <div id="simple-modal-status" class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> Conecte-se ao Google Drive
+            <div class="backup-modal-content">
+                <div id="simple-modal-status" class="backup-alert backup-info" style="display: none;">
+                    <i class="fas fa-info-circle"></i> Conecte-se ao Google Drive para fazer backup dos seus dados financeiros
                 </div>
                 
-                <div id="simple-modal-login" class="text-center" style="padding: 20px;">
-                    <button id="modal-login-btn" class="btn btn-success btn-large">
-                        <i class="fas fa-sign-in-alt"></i> Conectar ao Google Drive
+                <div id="simple-modal-login" class="text-center">
+                    <div style="margin-bottom: 25px;">
+                        <i class="fab fa-google-drive" style="font-size: 3rem; color: #5f6368; margin-bottom: 15px; opacity: 0.8;"></i>
+                        <h3 style="color: #3c4043; margin-bottom: 8px; font-size: 1.3rem; font-weight: 500;">Backup na Nuvem</h3>
+                        <p style="color: #5f6368; margin-bottom: 25px; font-size: 0.95rem; line-height: 1.5;">
+                            Salve seus dados financeiros com segurança no Google Drive
+                        </p>
+                    </div>
+                    <button id="modal-login-btn" class="btn btn-google" style="
+                        background: #fff;
+                        color: #3c4043;
+                        border: 1px solid #dadce0;
+                        padding: 12px 24px;
+                        font-size: 0.95rem;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        font-weight: 500;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 10px;
+                    ">
+                        <i class="fab fa-google" style="color: #4285f4;"></i> Conectar com Google
                     </button>
-                    <p class="text-muted" style="margin-top: 10px;">Armazene seus backups com segurança na nuvem</p>
+                    <p class="text-muted" style="margin-top: 20px; font-size: 0.85rem; color: #5f6368;">
+                        <i class="fas fa-lock" style="margin-right: 5px;"></i> Seus dados são protegidos
+                    </p>
                 </div>
                 
                 <div id="simple-modal-content" class="d-none">
                     <div style="margin-bottom: 20px;">
-                        <div class="alert alert-success">
-                            <i class="fas fa-check-circle"></i> Conectado ao Google Drive
-                            <button id="modal-logout-btn" class="btn btn-warning btn-sm float-right">
-                                <i class="fas fa-sign-out-alt"></i> Desconectar
-                            </button>
-                        </div>
-                    </div>
-                    <div class="row" style="margin-bottom: 20px;">
-                        <div class="col-8">
-                            <input type="text" id="modal-backup-name" class="form-control" placeholder="Descrição do backup (opcional)">
-                        </div>
-                        <div class="col-4">
-                            <button id="modal-create-backup" class="btn btn-primary btn-block">
-                                <i class="fas fa-plus"></i> Criar Backup
+                        <div class="backup-alert backup-success" style="
+                            background: #f0f7f4;
+                            border-left: 3px solid #34a853;
+                            padding: 12px 15px;
+                            border-radius: 2px;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        ">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-check-circle" style="color: #34a853;"></i> 
+                                <span style="color: #0d652d; font-weight: 500; font-size: 0.95rem;">Conectado ao Google Drive</span>
+                            </div>
+                            <button id="modal-logout-btn" class="btn btn-logout" style="
+                                background: #f8f9fa;
+                                color: #5f6368;
+                                border: 1px solid #dadce0;
+                                padding: 6px 12px;
+                                font-size: 0.85rem;
+                                border-radius: 4px;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                            ">
+                                <i class="fas fa-sign-out-alt"></i> Sair
                             </button>
                         </div>
                     </div>
                     
-                    <div id="backups-list" style="max-height: 400px; overflow-y: auto;">
-                        <div class="text-center text-muted" style="padding: 40px;">
-                            <i class="fas fa-inbox fa-3x"></i>
-                            <p style="margin-top: 20px;">Nenhum backup encontrado</p>
+                    <div style="margin-bottom: 25px;">
+                        <div style="margin-bottom: 10px; display: flex; gap: 10px;">
+                            <div style="flex: 1;">
+                                <input type="text" id="modal-backup-name" class="backup-input" placeholder="Nome do backup (opcional)" style="
+                                    width: 100%;
+                                    padding: 10px 12px;
+                                    border: 1px solid #dadce0;
+                                    border-radius: 4px;
+                                    font-size: 0.95rem;
+                                    transition: border-color 0.2s;
+                                    box-sizing: border-box;
+                                ">
+                            </div>
+                            <button id="modal-create-backup" class="btn btn-create-backup" style="
+                                background: #1a73e8;
+                                color: white;
+                                border: none;
+                                padding: 10px 20px;
+                                font-size: 0.95rem;
+                                border-radius: 4px;
+                                cursor: pointer;
+                                transition: background-color 0.2s;
+                                white-space: nowrap;
+                                font-weight: 500;
+                            ">
+                                <i class="fas fa-cloud-upload-alt" style="margin-right: 5px;"></i> Criar Backup
+                            </button>
+                        </div>
+                        <p style="font-size: 0.85rem; color: #5f6368; margin-top: 8px; line-height: 1.4;">
+                            <i class="fas fa-info-circle" style="margin-right: 5px;"></i> O backup inclui todas as transações, recorrentes e metas
+                        </p>
+                    </div>
+                    
+                    <div style="margin-top: 25px;">
+                        <h4 style="color: #3c4043; margin-bottom: 15px; font-size: 1.1rem; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-history" style="color: #5f6368;"></i> Backups Anteriores
+                        </h4>
+                        <div id="backups-list" style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
+                            <div class="text-center" style="padding: 30px 20px; color: #5f6368;">
+                                <i class="fas fa-inbox fa-2x" style="margin-bottom: 15px; opacity: 0.5;"></i>
+                                <p style="font-size: 0.95rem; margin-bottom: 5px;">Nenhum backup encontrado</p>
+                                <p style="font-size: 0.85rem;">Crie seu primeiro backup acima</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-actions">
-                <button class="btn btn-secondary close-simple-modal">Fechar</button>
+            <div class="backup-modal-actions">
+                <button class="btn btn-close-modal" style="
+                    background: #f44336;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    font-size: 0.95rem;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+                    font-weight: 500;
+                ">
+                    Fechar
+                </button>
             </div>
         </div>
     `;
     
     document.body.appendChild(modal);
     
+    // Adicionar estilos CSS
+    if (!document.getElementById('drive-backup-styles')) {
+        var style = document.createElement('style');
+        style.id = 'drive-backup-styles';
+        style.textContent = `
+            /* Estilos para o modal do Google Drive Backup */
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                padding: 20px;
+                box-sizing: border-box;
+            }
+            
+            .backup-modal {
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                width: 100%;
+                max-width: 500px;
+                max-height: 85vh;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                animation: modalSlideUp 0.3s ease-out;
+            }
+            
+            @keyframes modalSlideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .backup-modal-header {
+                background: white;
+                border-bottom: 1px solid #dadce0;
+                padding: 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .backup-modal-header h2 {
+                margin: 0;
+                font-size: 1.3rem;
+                font-weight: 500;
+                color: #3c4043;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .backup-modal-header .close-backup-modal:hover {
+                background-color: #f5f5f5;
+                transform: rotate(90deg);
+            }
+            
+            .backup-modal-header .close-backup-modal:active {
+                transform: rotate(90deg) scale(0.9);
+            }
+            
+            .backup-modal-content {
+                padding: 20px;
+                flex: 1;
+                overflow-y: auto;
+                background: #fff;
+            }
+            
+            .backup-modal-actions {
+                padding: 15px 20px;
+                border-top: 1px solid #dadce0;
+                display: flex;
+                justify-content: flex-end;
+                background: white;
+            }
+            
+            .backup-modal-actions .btn-close-modal:hover {
+                background: #d32f2f;
+            }
+            
+            .backup-modal-actions .btn-close-modal:active {
+                background: #b71c1c;
+            }
+            
+            /* Botões do modal */
+            .btn-google:hover {
+                background: #f8f9fa;
+                border-color: #c6c9cc;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            
+            .btn-google:active {
+                background: #f1f3f4;
+            }
+            
+            .btn-logout:hover {
+                background: #f1f3f4;
+            }
+            
+            .btn-create-backup:hover {
+                background: #0d62d9;
+            }
+            
+            .btn-create-backup:active {
+                background: #0a56c4;
+            }
+            
+            .backup-input:focus {
+                border-color: #1a73e8;
+                outline: none;
+                box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+            }
+            
+            /* Alertas do modal */
+            .backup-alert {
+                border-radius: 4px;
+                padding: 12px 15px;
+                margin-bottom: 20px;
+                font-size: 0.95rem;
+                line-height: 1.4;
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .backup-info {
+                background: #e8f0fe;
+                color: #1a73e8;
+                border-left: 3px solid #1a73e8;
+            }
+            
+            .backup-success {
+                background: #f0f7f4;
+                color: #0d652d;
+                border-left: 3px solid #34a853;
+            }
+            
+            /* Lista de backups */
+            .backup-item {
+                background: #f8f9fa;
+                border: 1px solid #e8eaed;
+                border-radius: 6px;
+                padding: 15px;
+                margin-bottom: 10px;
+                transition: all 0.2s;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .backup-item:hover {
+                background: #f1f3f4;
+                border-color: #dadce0;
+            }
+            
+            .backup-item-info {
+                flex: 1;
+                min-width: 0;
+            }
+            
+            .backup-name {
+                font-weight: 500;
+                color: #3c4043;
+                margin-bottom: 5px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 0.95rem;
+            }
+            
+            .backup-name i {
+                color: #5f6368;
+            }
+            
+            .backup-date {
+                color: #5f6368;
+                font-size: 0.85rem;
+            }
+            
+            .backup-item-actions {
+                display: flex;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+            
+            .backup-item-actions .btn {
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 0.85rem;
+                font-weight: 500;
+                min-width: 90px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+                transition: all 0.2s;
+                border: none;
+                cursor: pointer;
+            }
+            
+            .restore-simple-btn {
+                background: #34a853;
+                color: white;
+            }
+            
+            .restore-simple-btn:hover {
+                background: #2e974a;
+            }
+            
+            .download-simple-btn {
+                background: #1a73e8;
+                color: white;
+            }
+            
+            .download-simple-btn:hover {
+                background: #0d62d9;
+            }
+            
+            /* Responsividade */
+            @media (max-width: 768px) {
+                .modal-overlay {
+                    padding: 10px;
+                    align-items: flex-end;
+                }
+                
+                .backup-modal {
+                    max-width: 100%;
+                    max-height: 90vh;
+                    border-radius: 12px 12px 0 0;
+                    animation: modalSlideUpMobile 0.3s ease-out;
+                }
+                
+                @keyframes modalSlideUpMobile {
+                    from {
+                        transform: translateY(100%);
+                    }
+                    to {
+                        transform: translateY(0);
+                    }
+                }
+                
+                .backup-modal-header {
+                    padding: 15px;
+                }
+                
+                .backup-modal-content {
+                    padding: 15px;
+                }
+                
+                .backup-modal-actions {
+                    padding: 12px 15px;
+                }
+                
+                .backup-item {
+                    flex-direction: column;
+                    align-items: stretch;
+                    gap: 12px;
+                    padding: 12px;
+                }
+                
+                .backup-item-actions {
+                    width: 100%;
+                }
+                
+                .backup-item-actions .btn {
+                    flex: 1;
+                    min-width: 0;
+                }
+            }
+            
+            @media (max-width: 480px) {
+                .backup-modal-header h2 {
+                    font-size: 1.1rem;
+                }
+                
+                #modal-login-btn, #modal-create-backup, .btn-close-modal {
+                    font-size: 0.9rem;
+                    padding: 10px 15px;
+                }
+            }
+            
+            .d-none {
+                display: none !important;
+            }
+            
+            /* Scrollbar personalizada */
+            #backups-list::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            #backups-list::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 3px;
+            }
+            
+            #backups-list::-webkit-scrollbar-thumb {
+                background: #c1c1c1;
+                border-radius: 3px;
+            }
+            
+            #backups-list::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
     // Event listeners
     setTimeout(function() {
         // Fechar modal
-        modal.querySelectorAll('.close-recurring-modal, .close-simple-modal').forEach(function(btn) {
+        modal.querySelectorAll('.close-backup-modal, .btn-close-modal').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                modal.style.display = 'none';
+                closeModal();
             });
         });
         
         // Login no modal
-        document.getElementById('modal-login-btn')?.addEventListener('click', async function() {
-            await signInToDrive();
-            updateSimpleModal();
-        });
+        var loginBtn = document.getElementById('modal-login-btn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', async function() {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conectando...';
+                this.disabled = true;
+                this.style.opacity = '0.7';
+                
+                try {
+                    await signInToDrive();
+                    updateSimpleModal();
+                } catch (error) {
+                    this.innerHTML = '<i class="fab fa-google"></i> Tentar Novamente';
+                    this.disabled = false;
+                    this.style.opacity = '1';
+                }
+            });
+        }
         
         // Logout no modal
-        document.getElementById('modal-logout-btn')?.addEventListener('click', async function() {
-            await signOutFromDrive();
-            updateSimpleModal();
-        });
+        var logoutBtn = document.getElementById('modal-logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async function() {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sair';
+                this.disabled = true;
+                this.style.opacity = '0.7';
+                
+                await signOutFromDrive();
+                updateSimpleModal();
+                
+                this.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair';
+                this.disabled = false;
+                this.style.opacity = '1';
+            });
+        }
         
         // Criar backup no modal
-        document.getElementById('modal-create-backup')?.addEventListener('click', async function() {
-            var name = document.getElementById('modal-backup-name')?.value || '';
-            await createSimpleBackup(name);
-            document.getElementById('modal-backup-name').value = '';
-            updateBackupListInModal();
-        });
+        var createBackupBtn = document.getElementById('modal-create-backup');
+        if (createBackupBtn) {
+            createBackupBtn.addEventListener('click', async function() {
+                var name = document.getElementById('modal-backup-name')?.value || '';
+                
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
+                this.disabled = true;
+                this.style.opacity = '0.7';
+                
+                try {
+                    await createSimpleBackup(name);
+                    document.getElementById('modal-backup-name').value = '';
+                    updateBackupListInModal();
+                } finally {
+                    this.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Criar Backup';
+                    this.disabled = false;
+                    this.style.opacity = '1';
+                }
+            });
+        }
         
         // Fechar ao clicar fora
         modal.addEventListener('click', function(e) {
             if (e.target === modal) {
-                modal.style.display = 'none';
+                closeModal();
+            }
+        });
+        
+        // Fechar com tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                closeModal();
             }
         });
         
         updateSimpleModal();
     }, 100);
+}
+
+/**
+ * Fecha o modal
+ */
+function closeModal() {
+    var modal = document.getElementById('simple-backup-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = ''; // Restaurar scroll
+    }
 }
 
 /**
@@ -6899,8 +7410,20 @@ function showSimpleModal() {
     var modal = document.getElementById('simple-backup-modal');
     if (modal) {
         modal.style.display = 'flex';
+        // Impedir scroll no body quando modal estiver aberto
+        document.body.style.overflow = 'hidden';
+        
         updateSimpleModal();
         updateBackupListInModal();
+        
+        // Focar no botão principal ou campo de entrada
+        setTimeout(() => {
+            if (!backupState.signedIn) {
+                document.getElementById('modal-login-btn')?.focus();
+            } else {
+                document.getElementById('modal-backup-name')?.focus();
+            }
+        }, 300);
     }
 }
 
@@ -6921,9 +7444,7 @@ function updateSimpleModal() {
         if (contentSection) contentSection.classList.remove('d-none');
     } else {
         if (statusEl) {
-            statusEl.style.display = 'block';
-            statusEl.className = 'alert alert-info';
-            statusEl.innerHTML = '<i class="fab fa-google-drive"></i> Conecte-se ao Google Drive';
+            statusEl.style.display = 'flex';
         }
         if (loginSection) loginSection.classList.remove('d-none');
         if (contentSection) contentSection.classList.add('d-none');
@@ -6947,10 +7468,13 @@ function updateBackupListInModal() {
     
     if (!backupState.signedIn || backupState.backups.length === 0) {
         container.innerHTML = `
-            <div class="text-center text-muted" style="padding: 40px;">
-                <i class="fas fa-inbox fa-3x"></i>
-                <p style="margin-top: 20px;">${
+            <div class="text-center" style="padding: 30px 20px; color: #5f6368;">
+                <i class="fas fa-inbox fa-2x" style="margin-bottom: 15px; opacity: 0.5;"></i>
+                <p style="font-size: 0.95rem; margin-bottom: 5px;">${
                     backupState.signedIn ? 'Nenhum backup encontrado' : 'Conecte-se para ver backups'
+                }</p>
+                <p style="font-size: 0.85rem;">${
+                    backupState.signedIn ? 'Crie seu primeiro backup acima' : ''
                 }</p>
             </div>
         `;
@@ -6964,20 +7488,20 @@ function updateBackupListInModal() {
         var name = backup.name.replace('.json', '').replace(/GG_/g, '').replace(/_/g, ' ');
         
         html += `
-            <div class="backup-item" style="border: 1px solid #ddd; border-radius: 5px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                <div class="backup-item-info" style="flex: 1;">
-                    <div class="backup-name" style="font-weight: bold; margin-bottom: 5px;">
+            <div class="backup-item">
+                <div class="backup-item-info">
+                    <div class="backup-name">
                         <i class="fas fa-file-archive"></i> ${name}
                     </div>
-                    <div class="backup-date" style="color: #666; font-size: 0.9em;">
+                    <div class="backup-date">
                         ${dateStr}
                     </div>
                 </div>
                 <div class="backup-item-actions">
-                    <button class="btn btn-small btn-success restore-simple-btn" data-id="${backup.id}" style="margin-right: 5px;">
+                    <button class="btn restore-simple-btn" data-id="${backup.id}">
                         <i class="fas fa-download"></i> Restaurar
                     </button>
-                    <button class="btn btn-small btn-info download-simple-btn" data-id="${backup.id}" data-name="${backup.name}">
+                    <button class="btn download-simple-btn" data-id="${backup.id}" data-name="${backup.name}">
                         <i class="fas fa-file-download"></i> Baixar
                     </button>
                 </div>
@@ -6996,8 +7520,7 @@ function updateBackupListInModal() {
                 var fileId = this.getAttribute('data-id');
                 var success = await restoreBackup(fileId);
                 if (success) {
-                    var modal = document.getElementById('simple-backup-modal');
-                    if (modal) modal.style.display = 'none';
+                    closeModal();
                 }
             });
         });
@@ -7042,19 +7565,32 @@ function showBackupAlert(message, type) {
         top: 20px;
         right: 20px;
         z-index: 9999;
-        padding: 15px;
-        border-radius: 5px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        max-width: 400px;
+        padding: 12px 16px;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        max-width: 350px;
         animation: slideIn 0.3s ease;
+        font-size: 0.95rem;
     `;
     
     var icon = type === 'success' ? 'check-circle' :
               type === 'error' ? 'exclamation-triangle' :
               type === 'warning' ? 'exclamation-circle' : 'info-circle';
     
+    var bgColor = type === 'success' ? '#34a853' :
+                 type === 'error' ? '#d93025' :
+                 type === 'warning' ?   '#fbbc05' : '#1a73e8';
+    
+    var textColor = type === 'success' ? '#0d652d' :
+                   type === 'error' ? '#b31412' :
+                   type === 'warning' ? '#7a4401' : '#0d47a1';
+    
+    alertDiv.style.backgroundColor = bgColor + '15';
+    alertDiv.style.borderLeft = '3px solid ' + bgColor;
+    alertDiv.style.color = textColor;
+    
     alertDiv.innerHTML = `
-        <i class="fas fa-${icon}" style="margin-right: 10px;"></i>
+        <i class="fas fa-${icon}" style="margin-right: 8px; color: ${bgColor};"></i>
         ${message}
     `;
     
@@ -7168,10 +7704,6 @@ window.GGDriveBackup = {
 };
 
 console.log('✅ Sistema de backup GG Financeiro carregado');
-
-// ============================================
-// FIM DO CÓDIGO DO DRIVE-BACKUP.JS
-// ============================================
     
 </script>
 </body>
