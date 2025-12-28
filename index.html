@@ -2201,6 +2201,50 @@ h1 i {
                         </div>
                     </div>
                 </div>
+
+                 <div class="backup-toggle" id="backup-toggle">
+    <div class="backup-icon">
+        <i class="fab fa-google-drive"></i>
+    </div>
+    <div class="backup-container" id="backup-container">
+        <div class="backup-header">
+            <h3><i class="fab fa-google-drive"></i> Backup Google Drive</h3>
+            <div class="backup-status" id="backup-status">
+                <i class="fas fa-circle" style="color: #e74c3c;"></i>
+                <span>Desconectado</span>
+            </div>
+        </div>
+        
+        <div class="backup-actions">
+            <button class="btn-backup-login" id="backup-login-btn">
+                <i class="fas fa-sign-in-alt"></i> Conectar ao Google Drive
+            </button>
+            
+            <div id="backup-logged-actions" style="display: none;">
+                <div class="backup-input-group">
+                    <input type="text" id="backup-description" placeholder="Descrição do backup (opcional)">
+                    <button class="btn-backup-create" id="backup-create-btn">
+                        <i class="fas fa-plus"></i> Criar Backup
+                    </button>
+                </div>
+                
+                <div class="backup-list-container">
+                    <h4><i class="fas fa-history"></i> Backups Recentes</h4>
+                    <div id="backup-list">
+                        <div class="backup-empty">
+                            <i class="fas fa-inbox"></i>
+                            <p>Nenhum backup encontrado</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn-backup-logout" id="backup-logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Desconectar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
                 
                 <div class="date-display">
                     <i class="fas fa-calendar-alt"></i> <span id="current-date"></span>
