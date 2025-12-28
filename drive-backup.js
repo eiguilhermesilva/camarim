@@ -1,8 +1,8 @@
-// drive-backup-simple.js
-// Sistema de backup ULTRA SIMPLIFICADO para Google Drive
+// drive-backup.js - Sistema de backup ULTRA SIMPLIFICADO para Google Drive
+// Adaptado para Controle Financeiro GG
 
-// PASSO 1: Obtenha estas credenciais em https://console.cloud.google.com/
-var GOOGLE_CLIENT_ID = '951619466938-fnhdvhrvpp3jmj8om1pracs1pqarui1k.apps.googleusercontent.com';
+// PASSO 1: Configure seu Client ID do Google Cloud Console
+var GOOGLE_CLIENT_ID = 'SEU_CLIENT_ID_AQUI'; // Substitua pelo seu Client ID
 
 // Estado do sistema
 var backupState = {
@@ -16,7 +16,7 @@ var backupState = {
 // ============================================
 
 /**
- * Faz login no Google Drive - MÉTODO SIMPLES
+ * Faz login no Google Drive
  */
 function signInToDrive() {
     // Criar URL de autenticação
@@ -40,6 +40,11 @@ function signInToDrive() {
         'Google Login',
         'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top
     );
+    
+    if (!popup) {
+        alert('Por favor, permita popups para fazer login no Google Drive.');
+        return;
+    }
     
     // Verificar token periodicamente
     var checkPopup = setInterval(function() {
@@ -127,10 +132,12 @@ function tryAutoLogin() {
                     loadBackups();
                 } else {
                     localStorage.removeItem('drive_token');
+                    updateBackupUI();
                 }
             })
             .catch(function() {
                 localStorage.removeItem('drive_token');
+                updateBackupUI();
             });
     }
 }
@@ -151,23 +158,23 @@ async function createSimpleBackup(description) {
     try {
         showBackupAlert('Criando backup...', 'info');
         
-        // 1. Obter dados do sistema
-        var systemData = await getSystemData();
+        // 1. Obter dados do sistema financeiro
+        var systemData = await getFinancialData();
         
         // 2. Adicionar informações do backup
         systemData.backupInfo = {
             date: new Date().toISOString(),
             description: description || 'Backup automático',
             version: '1.0',
-            user: 'Sistema Camarim'
+            app: 'GG Controle Financeiro'
         };
         
         // 3. Criar nome do arquivo
         var dateStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-        var timeStr = new Date().toLocaleTimeString('pt-BR').replace(/:/g, '-');
-        var fileName = 'Camarim_Backup_' + dateStr + '_' + timeStr + '.json';
+        var timeStr = new Date().toLocaleTimeString('pt-BR').replace(/:/g, '-').split(' ')[0];
+        var fileName = 'Financeiro_GG_Backup_' + dateStr + '_' + timeStr + '.json';
         if (description) {
-            fileName = 'Camarim_' + description.replace(/[^a-z0-9]/gi, '_') + '_' + dateStr + '.json';
+            fileName = 'Financeiro_GG_' + description.replace(/[^a-z0-9]/gi, '_') + '_' + dateStr + '.json';
         }
         
         // 4. Criar arquivo no Google Drive
@@ -189,30 +196,33 @@ async function createSimpleBackup(description) {
 }
 
 /**
- * Obtém dados do sistema
+ * Obtém dados do sistema financeiro
  */
-async function getSystemData() {
-    // Tentar usar databaseManager
-    if (typeof databaseManager !== 'undefined' && databaseManager.getSystemData) {
-        return await databaseManager.getSystemData();
-    }
-    
-    // Fallback para localStorage
-    var savedData = localStorage.getItem('camarim-system-data');
-    if (savedData) {
-        return JSON.parse(savedData);
-    }
-    
-    // Dados vazios
-    return {
-        products: [],
-        sales: [],
-        settings: {},
-        backupInfo: {
-            date: new Date().toISOString(),
-            message: 'Backup de dados vazios'
+async function getFinancialData() {
+    // Coletar todos os dados do sistema
+    var data = {
+        // Transações regulares
+        transactions: transactions || [],
+        
+        // Transações recorrentes
+        recurringTransactions: recurringTransactions || [],
+        
+        // Metas financeiras
+        financialGoals: financialGoals || [],
+        
+        // Configurações
+        notificationSettings: JSON.parse(localStorage.getItem('notificationSettings')) || {},
+        
+        // Informações gerais
+        summary: {
+            totalTransactions: transactions ? transactions.length : 0,
+            totalRecurring: recurringTransactions ? recurringTransactions.length : 0,
+            totalGoals: financialGoals ? financialGoals.length : 0,
+            lastUpdate: new Date().toISOString()
         }
     };
+    
+    return data;
 }
 
 /**
@@ -222,8 +232,8 @@ async function createFileInDrive(fileName, content) {
     var token = backupState.token;
     if (!token) throw new Error('Não autenticado');
     
-    // 1. Procurar pasta "Camarim Backups" ou criar
-    var folderId = await findOrCreateFolder('Camarim Backups');
+    // 1. Procurar pasta "Financeiro GG Backups" ou criar
+    var folderId = await findOrCreateFolder('Financeiro GG Backups');
     
     // 2. Criar arquivo
     var fileMetadata = {
@@ -303,8 +313,8 @@ async function loadBackups() {
     try {
         var token = backupState.token;
         
-        // 1. Encontrar pasta "Camarim Backups"
-        var folderId = await findFolderId('Camarim Backups');
+        // 1. Encontrar pasta "Financeiro GG Backups"
+        var folderId = await findFolderId('Financeiro GG Backups');
         if (!folderId) {
             backupState.backups = [];
             updateBackupListUI();
@@ -340,6 +350,7 @@ async function loadBackups() {
     } catch (error) {
         console.error('❌ Erro ao carregar backups:', error);
         backupState.backups = [];
+        updateBackupListUI();
     }
 }
 
@@ -368,7 +379,7 @@ async function findFolderId(folderName) {
  * Restaura um backup
  */
 async function restoreBackup(fileId) {
-    if (!confirm('⚠️ ATENÇÃO!\n\nIsso substituirá TODOS os dados atuais pelo backup.\n\nDeseja continuar?')) {
+    if (!confirm('⚠️ ATENÇÃO!\n\nIsso substituirá TODOS os dados financeiros atuais pelo backup.\n\nRecomenda-se exportar um backup atual antes de restaurar.\n\nDeseja continuar?')) {
         return false;
     }
     
@@ -390,7 +401,7 @@ async function restoreBackup(fileId) {
         var backupData = await response.json();
         
         // 2. Validar dados
-        if (!backupData.products || !Array.isArray(backupData.products)) {
+        if (!backupData.transactions || !Array.isArray(backupData.transactions)) {
             throw new Error('Arquivo de backup inválido');
         }
         
@@ -414,30 +425,42 @@ async function restoreBackup(fileId) {
  * Aplica dados do backup
  */
 async function applyBackupData(backupData) {
-    // Atualizar systemData global
-    if (typeof systemData !== 'undefined') {
-        systemData.products = backupData.products || [];
-        systemData.sales = backupData.sales || [];
-        systemData.settings = backupData.settings || {};
+    // 1. Atualizar transações
+    if (backupData.transactions && Array.isArray(backupData.transactions)) {
+        transactions = backupData.transactions;
+        localStorage.setItem('financialTransactions', JSON.stringify(transactions));
     }
     
-    // Salvar usando databaseManager
-    if (typeof databaseManager !== 'undefined' && databaseManager.saveSystemData) {
-        await databaseManager.saveSystemData(systemData);
-    } else {
-        // Fallback para localStorage
-        localStorage.setItem('camarim-system-data', JSON.stringify(systemData));
+    // 2. Atualizar transações recorrentes
+    if (backupData.recurringTransactions && Array.isArray(backupData.recurringTransactions)) {
+        recurringTransactions = backupData.recurringTransactions;
+        localStorage.setItem('recurringTransactions', JSON.stringify(recurringTransactions));
     }
     
-    // Recarregar interface
+    // 3. Atualizar metas financeiras
+    if (backupData.financialGoals && Array.isArray(backupData.financialGoals)) {
+        financialGoals = backupData.financialGoals;
+        localStorage.setItem('financialGoals', JSON.stringify(financialGoals));
+    }
+    
+    // 4. Atualizar configurações de notificação
+    if (backupData.notificationSettings) {
+        localStorage.setItem('notificationSettings', JSON.stringify(backupData.notificationSettings));
+    }
+    
+    // 5. Recarregar interface
     setTimeout(function() {
-        if (typeof loadData === 'function') loadData();
-        if (typeof updateDashboard === 'function') updateDashboard();
-        if (typeof updateProductsList === 'function') updateProductsList();
-        if (typeof updateSalesList === 'function') updateSalesList();
-        if (typeof showAlert === 'function') {
-            showAlert('Dados restaurados do backup!', 'success');
-        }
+        if (typeof updateUI === 'function') updateUI();
+        if (typeof renderRecurringTransactions === 'function') renderRecurringTransactions();
+        if (typeof renderFinancialGoals === 'function') renderFinancialGoals();
+        if (typeof loadNotificationSettings === 'function') loadNotificationSettings();
+        
+        showBackupAlert('Dados restaurados com sucesso! Recarregando...', 'success');
+        
+        // Recarregar após 2 segundos
+        setTimeout(function() {
+            location.reload();
+        }, 2000);
     }, 500);
 }
 
@@ -464,7 +487,7 @@ async function downloadBackupLocally(fileId, fileName) {
         
         var link = document.createElement('a');
         link.href = url;
-        link.download = fileName || 'backup_camarim.json';
+        link.download = fileName || 'backup_financeiro_gg.json';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -480,286 +503,421 @@ async function downloadBackupLocally(fileId, fileName) {
 }
 
 // ============================================
-// 4. INTERFACE SIMPLES (APENAS BOTÃO NO HEADER)
+// 4. INTERFACE DO BACKUP
 // ============================================
 
 /**
- * Adiciona interface básica
+ * Inicializa a interface do backup
  */
-function addSimpleBackupUI() {
-    // Apenas botão no cabeçalho
-    addHeaderButton();
+function initBackupUI() {
+    // Adicionar estilos CSS
+    addBackupStyles();
     
-    // Modal simples
-    createSimpleModal();
+    // Configurar eventos
+    setupBackupEvents();
+    
+    // Atualizar UI inicial
+    updateBackupUI();
 }
 
 /**
- * Adiciona botão no cabeçalho
+ * Adiciona estilos CSS para o backup
  */
-function addHeaderButton() {
-    var headerActions = document.getElementById('header-actions');
-    if (!headerActions) return;
-    
-    var button = document.createElement('button');
-    button.id = 'simple-backup-btn';
-    button.className = 'btn btn-light';
-    button.innerHTML = '<i class="fab fa-google-drive"></i>';
-    button.title = 'Google Drive Backup';
-    button.style.marginLeft = '5px';
-    
-    button.addEventListener('click', showSimpleModal);
-    
-    headerActions.appendChild(button);
-    
-    // Atualizar aparência do botão baseado no estado
-    updateHeaderButton();
-}
-
-/**
- * Atualiza aparência do botão do cabeçalho
- */
-function updateHeaderButton() {
-    var headerBtn = document.getElementById('simple-backup-btn');
-    if (!headerBtn) return;
-    
-    if (backupState.signedIn) {
-        headerBtn.className = 'btn btn-success';
-        headerBtn.title = 'Conectado ao Google Drive - Clique para gerenciar backups';
-        headerBtn.innerHTML = '<i class="fab fa-google-drive"></i>';
-    } else {
-        headerBtn.className = 'btn btn-light';
-        headerBtn.title = 'Conectar ao Google Drive';
-        headerBtn.innerHTML = '<i class="fab fa-google-drive"></i>';
-    }
-}
-
-/**
- * Cria modal simples
- */
-function createSimpleModal() {
-    if (document.getElementById('simple-backup-modal')) return;
-    
-    var modal = document.createElement('div');
-    modal.id = 'simple-backup-modal';
-    modal.className = 'modal';
-    modal.style.display = 'none';
-    
-    modal.innerHTML = '\
-        <div class="modal-content" style="max-width: 700px;">\
-            <div class="modal-header">\
-                <h2><i class="fab fa-google-drive"></i> Google Drive Backup</h2>\
-                <button class="modal-close">&times;</button>\
-            </div>\
-            \
-            <div class="modal-body">\
-                <div id="simple-modal-status" class="alert alert-info">\
-                    <i class="fas fa-info-circle"></i> Conecte-se ao Google Drive\
-                </div>\
-                \
-                <div id="simple-modal-login" class="text-center p-20">\
-                    <button id="modal-login-btn" class="btn btn-success btn-large">\
-                        <i class="fas fa-sign-in-alt"></i> Conectar ao Google Drive\
-                    </button>\
-                    <p class="text-muted mt-10">Armazene seus backups com segurança na nuvem</p>\
-                </div>\
-                \
-                <div id="simple-modal-content" class="d-none">\
-                    <div class="row mb-20">\
-                        <div class="col-12 mb-10">\
-                            <div class="alert alert-success">\
-                                <i class="fas fa-check-circle"></i> Conectado ao Google Drive\
-                                <button id="modal-logout-btn" class="btn btn-warning btn-sm float-right">\
-                                    <i class="fas fa-sign-out-alt"></i> Desconectar\
-                                </button>\
-                            </div>\
-                        </div>\
-                        <div class="col-8">\
-                            <input type="text" id="modal-backup-name" class="form-control" placeholder="Descrição do backup (opcional)">\
-                        </div>\
-                        <div class="col-4">\
-                            <button id="modal-create-backup" class="btn btn-primary btn-block">\
-                                <i class="fas fa-plus"></i> Criar Backup\
-                            </button>\
-                        </div>\
-                    </div>\
-                    \
-                    <div id="backups-list" style="max-height: 400px; overflow-y: auto;">\
-                        <div class="text-center text-muted p-40">\
-                            <i class="fas fa-inbox fa-3x"></i>\
-                            <p class="mt-20">Nenhum backup encontrado</p>\
-                        </div>\
-                    </div>\
-                </div>\
-            </div>\
-            \
-            <div class="modal-footer">\
-                <button class="btn btn-secondary modal-close">Fechar</button>\
-            </div>\
-        </div>\
-    ';
-    
-    document.body.appendChild(modal);
-    
-    // Event listeners
-    setTimeout(function() {
-        // Fechar modal
-        modal.querySelectorAll('.modal-close').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                modal.style.display = 'none';
-            });
-        });
+function addBackupStyles() {
+    var style = document.createElement('style');
+    style.id = 'backup-styles';
+    style.textContent = `
+        /* Toggle do backup */
+        .backup-toggle {
+            position: relative;
+            margin-right: 15px;
+            cursor: pointer;
+        }
         
-        // Login no modal
-        document.getElementById('modal-login-btn')?.addEventListener('click', async function() {
+        .backup-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4285F4, #34A853);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .backup-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        /* Container do backup */
+        .backup-container {
+            display: none;
+            position: absolute;
+            top: 50px;
+            right: 0;
+            width: 350px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .backup-container.show {
+            display: block;
+        }
+        
+        .backup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .backup-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+        
+        .backup-status {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .backup-status i {
+            margin-right: 5px;
+        }
+        
+        /* Botões */
+        .btn-backup-login, .btn-backup-create, .btn-backup-logout {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+        
+        .btn-backup-login {
+            background: linear-gradient(135deg, #4285F4, #34A853);
+            color: white;
+        }
+        
+        .btn-backup-create {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-backup-logout {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-backup-login:hover, .btn-backup-create:hover, .btn-backup-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        
+        .backup-input-group {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .backup-input-group input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        /* Lista de backups */
+        .backup-list-container {
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .backup-list-container h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+        
+        .backup-empty {
+            text-align: center;
+            padding: 30px;
+            color: #95a5a6;
+        }
+        
+        .backup-empty i {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .backup-item {
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .backup-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .backup-item-name {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .backup-item-date {
+            font-size: 11px;
+            color: #7f8c8d;
+        }
+        
+        .backup-item-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        
+        .btn-backup-restore, .btn-backup-download {
+            flex: 1;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .btn-backup-restore {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-backup-download {
+            background: #3498db;
+            color: white;
+        }
+        
+        /* Alertas */
+        .backup-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .backup-alert.success {
+            background: #27ae60;
+        }
+        
+        .backup-alert.error {
+            background: #e74c3c;
+        }
+        
+        .backup-alert.info {
+            background: #3498db;
+        }
+        
+        .backup-alert.warning {
+            background: #f39c12;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    `;
+    
+    document.head.appendChild(style);
+}
+
+/**
+ * Configura eventos do backup
+ */
+function setupBackupEvents() {
+    const backupToggle = document.getElementById('backup-toggle');
+    const backupContainer = document.getElementById('backup-container');
+    const backupLoginBtn = document.getElementById('backup-login-btn');
+    const backupCreateBtn = document.getElementById('backup-create-btn');
+    const backupLogoutBtn = document.getElementById('backup-logout-btn');
+    
+    if (!backupToggle || !backupContainer) return;
+    
+    // Toggle do container
+    backupToggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        backupContainer.classList.toggle('show');
+    });
+    
+    // Fechar ao clicar fora
+    document.addEventListener('click', function(e) {
+        if (!backupContainer.contains(e.target) && 
+            e.target !== backupToggle && 
+            !backupToggle.contains(e.target)) {
+            backupContainer.classList.remove('show');
+        }
+    });
+    
+    // Login
+    if (backupLoginBtn) {
+        backupLoginBtn.addEventListener('click', async function() {
             await signInToDrive();
-            updateSimpleModal();
         });
-        
-        // Logout no modal
-        document.getElementById('modal-logout-btn')?.addEventListener('click', async function() {
-            await signOutFromDrive();
-            updateSimpleModal();
-        });
-        
-        // Criar backup no modal
-        document.getElementById('modal-create-backup')?.addEventListener('click', async function() {
-            var name = document.getElementById('modal-backup-name')?.value || '';
-            await createSimpleBackup(name);
-            document.getElementById('modal-backup-name').value = '';
-            updateBackupListInModal();
-        });
-        
-        // Fechar ao clicar fora
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                modal.style.display = 'none';
+    }
+    
+    // Criar backup
+    if (backupCreateBtn) {
+        backupCreateBtn.addEventListener('click', async function() {
+            const description = document.getElementById('backup-description')?.value || '';
+            await createSimpleBackup(description);
+            if (document.getElementById('backup-description')) {
+                document.getElementById('backup-description').value = '';
             }
         });
-        
-        updateSimpleModal();
-    }, 100);
-}
-
-/**
- * Mostra o modal
- */
-function showSimpleModal() {
-    var modal = document.getElementById('simple-backup-modal');
-    if (modal) {
-        modal.style.display = 'flex';
-        updateSimpleModal();
-        updateBackupListInModal();
+    }
+    
+    // Logout
+    if (backupLogoutBtn) {
+        backupLogoutBtn.addEventListener('click', function() {
+            signOutFromDrive();
+        });
     }
 }
 
 /**
- * Atualiza modal
- */
-function updateSimpleModal() {
-    var modal = document.getElementById('simple-backup-modal');
-    if (!modal) return;
-    
-    var statusEl = document.getElementById('simple-modal-status');
-    var loginSection = document.getElementById('simple-modal-login');
-    var contentSection = document.getElementById('simple-modal-content');
-    
-    if (backupState.signedIn) {
-        statusEl.className = 'd-none';
-        if (loginSection) loginSection.classList.add('d-none');
-        if (contentSection) contentSection.classList.remove('d-none');
-    } else {
-        statusEl.className = 'alert alert-info';
-        statusEl.innerHTML = '<i class="fab fa-google-drive"></i> Conecte-se ao Google Drive';
-        if (loginSection) loginSection.classList.remove('d-none');
-        if (contentSection) contentSection.classList.add('d-none');
-    }
-}
-
-/**
- * Atualiza UI do backup
+ * Atualiza a UI do backup
  */
 function updateBackupUI() {
-    updateHeaderButton();
-    updateSimpleModal();
+    const backupStatus = document.getElementById('backup-status');
+    const backupLoginActions = document.getElementById('backup-logged-actions');
+    const backupLoginBtn = document.getElementById('backup-login-btn');
+    
+    if (backupStatus) {
+        if (backupState.signedIn) {
+            backupStatus.innerHTML = '<i class="fas fa-circle" style="color: #27ae60;"></i><span>Conectado</span>';
+        } else {
+            backupStatus.innerHTML = '<i class="fas fa-circle" style="color: #e74c3c;"></i><span>Desconectado</span>';
+        }
+    }
+    
+    if (backupLoginActions) {
+        backupLoginActions.style.display = backupState.signedIn ? 'block' : 'none';
+    }
+    
+    if (backupLoginBtn) {
+        backupLoginBtn.style.display = backupState.signedIn ? 'none' : 'block';
+    }
 }
 
 /**
- * Atualiza lista de backups no modal
+ * Atualiza lista de backups na UI
  */
-function updateBackupListInModal() {
-    var container = document.getElementById('backups-list');
-    if (!container) return;
+function updateBackupListUI() {
+    const backupList = document.getElementById('backup-list');
+    if (!backupList) return;
     
     if (!backupState.signedIn || backupState.backups.length === 0) {
-        container.innerHTML = '\
-            <div class="text-center text-muted p-40">\
-                <i class="fas fa-inbox fa-3x"></i>\
-                <p class="mt-20">' + 
-                    (backupState.signedIn ? 'Nenhum backup encontrado' : 'Conecte-se para ver backups') + 
-                '</p>\
-            </div>\
-        ';
+        backupList.innerHTML = `
+            <div class="backup-empty">
+                <i class="fas fa-inbox"></i>
+                <p>${backupState.signedIn ? 'Nenhum backup encontrado' : 'Conecte-se para ver backups'}</p>
+            </div>
+        `;
         return;
     }
     
-    var html = '<div class="backup-items">';
-    
+    let html = '';
     backupState.backups.forEach(function(backup) {
-        var dateStr = backup.formattedDate;
-        var name = backup.name.replace('.json', '').replace(/Camarim_/g, '').replace(/_/g, ' ');
+        const name = backup.name.replace('.json', '').replace(/Financeiro_GG_/g, '').replace(/_/g, ' ');
+        const sizeKB = backup.size ? Math.round(backup.size / 1024) : 0;
         
-        html += '\
-            <div class="backup-item">\
-                <div class="backup-item-info">\
-                    <div class="backup-name"><i class="fas fa-file-archive"></i> ' + name + '</div>\
-                    <div class="backup-date">' + dateStr + '</div>\
-                </div>\
-                <div class="backup-item-actions">\
-                    <button class="btn btn-small btn-success restore-simple-btn" data-id="' + backup.id + '">\
-                        <i class="fas fa-download"></i> Restaurar\
-                    </button>\
-                    <button class="btn btn-small btn-info download-simple-btn" data-id="' + backup.id + '" data-name="' + backup.name + '">\
-                        <i class="fas fa-file-download"></i> Baixar\
-                    </button>\
-                </div>\
-            </div>\
-        ';
+        html += `
+            <div class="backup-item">
+                <div class="backup-item-header">
+                    <div class="backup-item-name">${name}</div>
+                    <div class="backup-item-date">${backup.formattedDate}</div>
+                </div>
+                <div>${sizeKB} KB</div>
+                <div class="backup-item-actions">
+                    <button class="btn-backup-restore" data-id="${backup.id}">
+                        <i class="fas fa-download"></i> Restaurar
+                    </button>
+                    <button class="btn-backup-download" data-id="${backup.id}" data-name="${backup.name}">
+                        <i class="fas fa-file-download"></i> Baixar
+                    </button>
+                </div>
+            </div>
+        `;
     });
     
-    html += '</div>';
-    container.innerHTML = html;
+    backupList.innerHTML = html;
     
-    // Event listeners
+    // Event listeners para os botões
     setTimeout(function() {
-        // Restaurar
-        container.querySelectorAll('.restore-simple-btn').forEach(function(btn) {
+        // Restaurar backup
+        backupList.querySelectorAll('.btn-backup-restore').forEach(function(btn) {
             btn.addEventListener('click', async function() {
-                var fileId = this.getAttribute('data-id');
-                var success = await restoreBackup(fileId);
-                if (success) {
-                    var modal = document.getElementById('simple-backup-modal');
-                    if (modal) modal.style.display = 'none';
-                }
+                const fileId = this.getAttribute('data-id');
+                await restoreBackup(fileId);
             });
         });
         
-        // Baixar
-        container.querySelectorAll('.download-simple-btn').forEach(function(btn) {
+        // Baixar backup
+        backupList.querySelectorAll('.btn-backup-download').forEach(function(btn) {
             btn.addEventListener('click', async function() {
-                var fileId = this.getAttribute('data-id');
-                var fileName = this.getAttribute('data-name');
+                const fileId = this.getAttribute('data-id');
+                const fileName = this.getAttribute('data-name');
                 await downloadBackupLocally(fileId, fileName);
             });
         });
     }, 100);
-}
-
-/**
- * Atualiza lista de backups na UI geral
- */
-function updateBackupListUI() {
-    updateBackupListInModal();
 }
 
 // ============================================
@@ -770,83 +928,34 @@ function updateBackupListUI() {
  * Mostra alerta
  */
 function showBackupAlert(message, type) {
-    // Usar sistema existente
-    if (typeof showAlert === 'function') {
-        showAlert(message, type);
-        return;
-    }
+    // Remover alertas antigos
+    document.querySelectorAll('.backup-alert').forEach(function(el) {
+        el.remove();
+    });
     
-    // Criar alerta simples
-    var alertDiv = document.createElement('div');
-    alertDiv.className = 'alert alert-' + type;
-    alertDiv.style.cssText = '\
-        position: fixed;\
-        top: 20px;\
-        right: 20px;\
-        z-index: 9999;\
-        padding: 15px;\
-        border-radius: 5px;\
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);\
-        max-width: 400px;\
-        animation: slideIn 0.3s ease;\
-    ';
-    
-    var icon = type === 'success' ? 'check-circle' :
-              type === 'error' ? 'exclamation-triangle' :
-              type === 'warning' ? 'exclamation-circle' : 'info-circle';
-    
-    alertDiv.innerHTML = '\
-        <i class="fas fa-' + icon + '" style="margin-right: 10px;"></i>\
-        ' + message + '\
-    ';
+    // Criar alerta
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `backup-alert ${type}`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                          type === 'error' ? 'exclamation-triangle' : 
+                          type === 'warning' ? 'exclamation-circle' : 'info-circle'}"></i>
+        ${message}
+    `;
     
     document.body.appendChild(alertDiv);
     
+    // Remover após 4 segundos
     setTimeout(function() {
-        alertDiv.style.animation = 'slideOut 0.3s ease';
-        setTimeout(function() {
-            if (alertDiv.parentNode) {
-                alertDiv.parentNode.removeChild(alertDiv);
-            }
-        }, 300);
+        if (alertDiv.parentNode) {
+            alertDiv.style.animation = 'slideOut 0.3s ease';
+            setTimeout(function() {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 300);
+        }
     }, 4000);
-    
-    // Adicionar estilos CSS se não existirem
-    if (!document.getElementById('backup-alert-styles')) {
-        var style = document.createElement('style');
-        style.id = 'backup-alert-styles';
-        style.textContent = '\
-            @keyframes slideIn {\
-                from { transform: translateX(100%); opacity: 0; }\
-                to { transform: translateX(0); opacity: 1; }\
-            }\
-            @keyframes slideOut {\
-                from { transform: translateX(0); opacity: 1; }\
-                to { transform: translateX(100%); opacity: 0; }\
-            }\
-            .backup-item {\
-                border: 1px solid #ddd;\
-                border-radius: 5px;\
-                padding: 15px;\
-                margin-bottom: 10px;\
-                display: flex;\
-                justify-content: space-between;\
-                align-items: center;\
-            }\
-            .backup-item-info {\
-                flex: 1;\
-            }\
-            .backup-name {\
-                font-weight: bold;\
-                margin-bottom: 5px;\
-            }\
-            .backup-date {\
-                color: #666;\
-                font-size: 0.9em;\
-            }\
-        ';
-        document.head.appendChild(style);
-    }
 }
 
 // ============================================
@@ -854,10 +963,10 @@ function showBackupAlert(message, type) {
 // ============================================
 
 /**
- * Inicializa o sistema
+ * Inicializa o sistema de backup
  */
 function initSimpleBackup() {
-    console.log('🚀 Iniciando sistema de backup simples...');
+    console.log('🚀 Iniciando sistema de backup para Controle Financeiro GG...');
     
     // Verificar token na URL (para redirect)
     checkTokenFromURL();
@@ -865,31 +974,36 @@ function initSimpleBackup() {
     // Tentar login automático
     tryAutoLogin();
     
-    // Adicionar UI
-    setTimeout(addSimpleBackupUI, 1000);
+    // Inicializar UI
+    setTimeout(initBackupUI, 1000);
+    
+    // Configurar backup automático após salvar transações
+    setupAutoBackup();
     
     console.log('✅ Sistema de backup pronto');
 }
 
 /**
- * Integra com sistema principal
+ * Configura backup automático
  */
-function integrateWithMainSystem() {
-    // Backup automático após salvar
-    if (typeof saveData === 'function') {
-        var originalSaveData = saveData;
-        saveData = async function() {
-            var result = await originalSaveData.apply(this, arguments);
+function setupAutoBackup() {
+    // Backup automático após salvar transações
+    if (typeof saveTransactions === 'function') {
+        const originalSaveTransactions = saveTransactions;
+        
+        saveTransactions = function() {
+            const result = originalSaveTransactions.apply(this, arguments);
             
             // Backup automático (apenas se estiver logado e não houver backup recente)
             if (backupState.signedIn) {
-                var lastBackup = localStorage.getItem('last_auto_backup');
-                var now = Date.now();
+                const lastBackup = localStorage.getItem('last_auto_backup_financeiro');
+                const now = Date.now();
                 
-                if (!lastBackup || (now - parseInt(lastBackup)) > 3600000) { // 1 hora
+                // Fazer backup automático apenas uma vez por hora
+                if (!lastBackup || (now - parseInt(lastBackup)) > 3600000) {
                     setTimeout(function() {
-                        createSimpleBackup('auto_save');
-                        localStorage.setItem('last_auto_backup', now.toString());
+                        createSimpleBackup('auto_backup');
+                        localStorage.setItem('last_auto_backup_financeiro', now.toString());
                     }, 2000);
                 }
             }
@@ -907,25 +1021,22 @@ function integrateWithMainSystem() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
         initSimpleBackup();
-        setTimeout(integrateWithMainSystem, 2000);
     });
 } else {
     initSimpleBackup();
-    setTimeout(integrateWithMainSystem, 2000);
 }
 
 // ============================================
-// 8. API PÚBLICA (opcional)
+// 8. API PÚBLICA
 // ============================================
 
-window.SimpleDriveBackup = {
+window.FinanceBackup = {
     login: signInToDrive,
     logout: signOutFromDrive,
     createBackup: createSimpleBackup,
     restoreBackup: restoreBackup,
-    showModal: showSimpleModal,
     isConnected: function() { return backupState.signedIn; },
     setClientId: function(clientId) { GOOGLE_CLIENT_ID = clientId; }
 };
 
-console.log('✅ Sistema de backup SIMPLES carregado');
+console.log('✅ Sistema de backup para Controle Financeiro GG carregado');
